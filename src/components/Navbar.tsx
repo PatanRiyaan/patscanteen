@@ -47,6 +47,9 @@ export function Navbar() {
             )}
           </Link>
 
+          {/* Quick-switch between dummy accounts */}
+          <AccountSwitcher />
+
           {/* User chip */}
           {user && (
             <div className="hidden sm:flex items-center gap-2 pl-2 pr-1 py-1 rounded-xl border border-border bg-card">
