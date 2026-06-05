@@ -11,6 +11,7 @@ export type User = {
 };
 
 // 👉 Change these to add / edit demo accounts.
+// Multiple dummy accounts so the student can quickly switch between profiles.
 const DUMMY_USERS: Array<User & { password: string }> = [
   {
     email: "student@pats.edu",
@@ -20,12 +21,40 @@ const DUMMY_USERS: Array<User & { password: string }> = [
     hostel: "Tagore Hostel",
     studentId: "PAT2026091",
   },
+  {
+    email: "priya@pats.edu",
+    password: "canteen123",
+    name: "Priya Iyer",
+    roomNo: "A-112",
+    hostel: "Nehru Hostel",
+    studentId: "PAT2026102",
+  },
+  {
+    email: "rahul@pats.edu",
+    password: "canteen123",
+    name: "Rahul Mehta",
+    roomNo: "C-307",
+    hostel: "Gandhi Hostel",
+    studentId: "PAT2026133",
+  },
+  {
+    email: "sara@pats.edu",
+    password: "canteen123",
+    name: "Sara Khan",
+    roomNo: "D-021",
+    hostel: "Bose Hostel",
+    studentId: "PAT2026144",
+  },
 ];
 
 type AuthCtx = {
   user: User | null;
+  // List of accounts available to switch into (passwords stripped).
+  accounts: User[];
   login: (email: string, password: string) => { ok: boolean; error?: string };
   register: (u: User & { password: string }) => { ok: boolean; error?: string };
+  // Switch to another known dummy account without re-entering a password.
+  switchAccount: (email: string) => { ok: boolean; error?: string };
   logout: () => void;
 };
 
@@ -34,6 +63,10 @@ const LS_KEY = "pats_user";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  // Expose the demo accounts (without passwords) for the account switcher UI.
+  const [accounts, setAccounts] = useState<User[]>(
+    () => DUMMY_USERS.map(({ password: _pw, ...safe }) => safe),
+  );
 
   // Restore session from localStorage (kept lightweight on purpose)
   useEffect(() => {
@@ -42,6 +75,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (raw) setUser(JSON.parse(raw));
     } catch { /* ignore */ }
   }, []);
+
+  // Keep `accounts` in sync when register() pushes new users.
+  const refreshAccounts = () =>
+    setAccounts(DUMMY_USERS.map(({ password: _pw, ...safe }) => safe));
 
   const login: AuthCtx["login"] = (email, password) => {
     const found = DUMMY_USERS.find(
@@ -59,7 +96,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (DUMMY_USERS.some((x) => x.email === u.email))
       return { ok: false, error: "An account with this email already exists." };
     DUMMY_USERS.push(u);
+    refreshAccounts();
     const { password: _pw, ...safe } = u;
+    setUser(safe);
+    localStorage.setItem(LS_KEY, JSON.stringify(safe));
+    return { ok: true };
+  };
+
+  // Quick-switch helper — used by the in-app account switcher.
+  // No password prompt: this is a demo convenience for browsing other profiles.
+  const switchAccount: AuthCtx["switchAccount"] = (email) => {
+    const found = DUMMY_USERS.find(
+      (u) => u.email.toLowerCase() === email.toLowerCase(),
+    );
+    if (!found) return { ok: false, error: "Account not found." };
+    const { password: _pw, ...safe } = found;
     setUser(safe);
     localStorage.setItem(LS_KEY, JSON.stringify(safe));
     return { ok: true };
@@ -70,7 +121,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(LS_KEY);
   };
 
-  return <Ctx.Provider value={{ user, login, register, logout }}>{children}</Ctx.Provider>;
+  return (
+    <Ctx.Provider value={{ user, accounts, login, register, switchAccount, logout }}>
+      {children}
+    </Ctx.Provider>
+  );
 }
 
 export function useAuth() {
