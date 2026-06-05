@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth";
 import { useCart } from "@/lib/menu";
 import { useTheme } from "@/hooks/use-theme";
 import { Moon, Sun, ShoppingBag, LogOut, UtensilsCrossed } from "lucide-react";
+import { AccountSwitcher } from "@/components/AccountSwitcher";
 
 export function Navbar() {
   const { user, logout } = useAuth();
@@ -45,6 +46,9 @@ export function Navbar() {
               </span>
             )}
           </Link>
+
+          {/* Quick-switch between dummy accounts */}
+          <AccountSwitcher />
 
           {/* User chip */}
           {user && (
