@@ -61,7 +61,7 @@ export function Navbar() {
             <Link
               to="/admin"
               aria-label="Admin"
-              className="hidden sm:grid place-items-center w-10 h-10 rounded-xl border border-border bg-card hover:bg-muted transition"
+              className="grid place-items-center w-10 h-10 rounded-xl border border-border bg-card hover:bg-muted transition"
             >
               <Shield className="w-4 h-4 text-primary" />
             </Link>
