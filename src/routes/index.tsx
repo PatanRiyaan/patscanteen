@@ -35,6 +35,13 @@ function Landing() {
   // If already logged in, skip the landing page.
   useEffect(() => { if (user) nav({ to: "/dashboard" }); }, [user, nav]);
 
+  // Cooldown ticker for the resend button
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const id = setInterval(() => setCooldown((c) => c - 1), 1000);
+    return () => clearInterval(id);
+  }, [cooldown]);
+
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setErr("");
@@ -57,9 +64,17 @@ function Landing() {
       hostel: String(f.get("hostel") || ""),
       studentId: String(f.get("sid") || ""),
     };
+
+    const otpRes = sendOtp(email);
+    if (!otpRes.ok) {
+      setErr(otpRes.error);
+      setCooldown(otpRes.retryAfterSec);
+      return;
+    }
+
     setPending(payload);
     setOtpInput("");
-    sendOtp(email);
+    setCooldown(60); // 60s throttle window
   }
 
   // Confirm the OTP and finalize registration.
