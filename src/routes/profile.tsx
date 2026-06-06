@@ -7,6 +7,10 @@ import { useCart } from "@/lib/menu";
 import { Blobs } from "@/components/Blobs";
 import { Navbar } from "@/components/Navbar";
 import { Mail, Home as HomeIcon, IdCard, Phone, ShieldCheck, Receipt, Pencil, Save, X } from "lucide-react";
+import {
+  profileSchema,
+  formatPhone, formatStudentId, formatRoom, formatHostel,
+} from "@/lib/validation";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({ meta: [{ title: "Profile — Pat's Canteen" }] }),
@@ -25,6 +29,8 @@ function ProfilePage() {
   const [form, setForm] = useState({
     name: "", phone: "", hostel: "", roomNo: "", studentId: "",
   });
+  // Field-level error messages from the Zod validator.
+  const [errors, setErrors] = useState<Partial<Record<keyof typeof form, string>>>({});
 
   // Reset form whenever we open the editor or switch accounts.
   useEffect(() => {
@@ -36,6 +42,7 @@ function ProfilePage() {
         roomNo: user.roomNo,
         studentId: user.studentId,
       });
+      setErrors({});
     }
   }, [user, editing]);
 
@@ -48,15 +55,22 @@ function ProfilePage() {
 
   const save = (e: React.FormEvent) => {
     e.preventDefault();
-    updateUser({
-      name: form.name.trim() || user.name,
-      phone: form.phone.trim() || undefined,
-      hostel: form.hostel.trim() || user.hostel,
-      roomNo: form.roomNo.trim() || user.roomNo,
-      studentId: form.studentId.trim() || user.studentId,
-    });
+    // Validate with the shared profile schema before persisting.
+    const parsed = profileSchema.safeParse(form);
+    if (!parsed.success) {
+      const next: typeof errors = {};
+      for (const issue of parsed.error.issues) {
+        const k = issue.path[0] as keyof typeof form;
+        if (!next[k]) next[k] = issue.message;
+      }
+      setErrors(next);
+      return;
+    }
+    setErrors({});
+    updateUser(parsed.data);
     setEditing(false);
   };
+
 
   return (
     <div className="relative min-h-screen pb-20">
@@ -94,11 +108,19 @@ function ProfilePage() {
             onSubmit={save}
             className="rounded-2xl border border-border bg-card shadow-card p-5 grid sm:grid-cols-2 gap-3 animate-fade-up"
           >
-            <Input label="Full name"  value={form.name}      onChange={(v) => setForm({ ...form, name: v })} />
-            <Input label="Phone"      value={form.phone}     onChange={(v) => setForm({ ...form, phone: v })} placeholder="+91 …" />
-            <Input label="Hostel"     value={form.hostel}    onChange={(v) => setForm({ ...form, hostel: v })} />
-            <Input label="Room no."   value={form.roomNo}    onChange={(v) => setForm({ ...form, roomNo: v })} />
-            <Input label="Student ID" value={form.studentId} onChange={(v) => setForm({ ...form, studentId: v })} className="sm:col-span-2" />
+            <Input label="Full name"  value={form.name}      error={errors.name}
+                   onChange={(v) => setForm({ ...form, name: v })} />
+            <Input label="Phone"      value={form.phone}     error={errors.phone}
+                   placeholder="+91 98765 43210"
+                   onChange={(v) => setForm({ ...form, phone: formatPhone(v) })} />
+            <Input label="Hostel"     value={form.hostel}    error={errors.hostel}
+                   onChange={(v) => setForm({ ...form, hostel: formatHostel(v) })} />
+            <Input label="Room no."   value={form.roomNo}    error={errors.roomNo}
+                   placeholder="B-204"
+                   onChange={(v) => setForm({ ...form, roomNo: formatRoom(v) })} />
+            <Input label="Student ID" value={form.studentId} error={errors.studentId}
+                   placeholder="PAT2026091" className="sm:col-span-2"
+                   onChange={(v) => setForm({ ...form, studentId: formatStudentId(v) })} />
             <Input label="Email (read-only)" value={user.email} onChange={() => {}} disabled className="sm:col-span-2" />
 
             <div className="sm:col-span-2 flex gap-2 justify-end pt-1">
@@ -176,10 +198,10 @@ function Field({ icon, label, value }: { icon: React.ReactNode; label: string; v
 }
 
 function Input({
-  label, value, onChange, placeholder, disabled, className = "",
+  label, value, onChange, placeholder, disabled, className = "", error,
 }: {
   label: string; value: string; onChange: (v: string) => void;
-  placeholder?: string; disabled?: boolean; className?: string;
+  placeholder?: string; disabled?: boolean; className?: string; error?: string;
 }) {
   return (
     <div className={"flex flex-col " + className}>
@@ -189,11 +211,17 @@ function Input({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         disabled={disabled}
-        className="h-10 rounded-xl border border-border bg-background px-3 text-sm disabled:opacity-60"
+        aria-invalid={Boolean(error)}
+        className={
+          "h-10 rounded-xl border bg-background px-3 text-sm disabled:opacity-60 " +
+          (error ? "border-destructive" : "border-border")
+        }
       />
+      {error && <p className="mt-1 text-[11px] text-destructive">{error}</p>}
     </div>
   );
 }
+
 
 export function StatusPill({ status }: { status: "preparing" | "ready" | "delivered" }) {
   const cls =

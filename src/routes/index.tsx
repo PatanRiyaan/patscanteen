@@ -5,7 +5,8 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { Blobs } from "@/components/Blobs";
 import { useTheme } from "@/hooks/use-theme";
-import { Moon, Sun, UtensilsCrossed, Sparkles, Clock, Wallet } from "lucide-react";
+import { Moon, Sun, UtensilsCrossed, Sparkles, Clock, Wallet, ShieldCheck } from "lucide-react";
+import { sendOtp, verifyOtp } from "@/lib/otp";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -23,6 +24,12 @@ function Landing() {
   const nav = useNavigate();
   const [mode, setMode] = useState<"login" | "register">("login");
   const [err, setErr] = useState("");
+  // OTP gate for sign-up: holds the pending registration payload until verified.
+  const [pending, setPending] = useState<null | {
+    email: string; password: string; name: string;
+    roomNo: string; hostel: string; studentId: string;
+  }>(null);
+  const [otpInput, setOtpInput] = useState("");
 
   // If already logged in, skip the landing page.
   useEffect(() => { if (user) nav({ to: "/dashboard" }); }, [user, nav]);
@@ -34,18 +41,37 @@ function Landing() {
     const email = String(f.get("email") || "");
     const password = String(f.get("password") || "");
 
-    const res = mode === "login"
-      ? login(email, password)
-      : register({
-          email, password,
-          name: String(f.get("name") || ""),
-          roomNo: String(f.get("room") || ""),
-          hostel: String(f.get("hostel") || ""),
-          studentId: String(f.get("sid") || ""),
-        });
+    if (mode === "login") {
+      const res = login(email, password);
+      if (!res.ok) setErr(res.error || "Something went wrong");
+      else nav({ to: "/dashboard" });
+      return;
+    }
 
-    if (!res.ok) setErr(res.error || "Something went wrong");
-    else nav({ to: "/dashboard" });
+    // Register flow: queue the payload and trigger an OTP email.
+    const payload = {
+      email, password,
+      name: String(f.get("name") || ""),
+      roomNo: String(f.get("room") || ""),
+      hostel: String(f.get("hostel") || ""),
+      studentId: String(f.get("sid") || ""),
+    };
+    setPending(payload);
+    setOtpInput("");
+    sendOtp(email);
+  }
+
+  // Confirm the OTP and finalize registration.
+  function confirmOtp(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setErr("");
+    if (!pending) return;
+    const v = verifyOtp(pending.email, otpInput);
+    if (!v.ok) { setErr(v.error || "Invalid OTP"); return; }
+    const r = register(pending);
+    if (!r.ok) { setErr(r.error || "Could not create account"); return; }
+    setPending(null);
+    nav({ to: "/dashboard" });
   }
 
   return (
@@ -109,6 +135,47 @@ function Landing() {
               ))}
             </div>
 
+            {pending ? (
+              // OTP gate — user must enter the 6-digit code we "sent" to their email.
+              <form onSubmit={confirmOtp} className="space-y-3">
+                <div className="flex items-start gap-3 rounded-xl border border-border bg-muted/50 p-3">
+                  <ShieldCheck className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                  <div className="text-xs text-muted-foreground">
+                    We sent a 6-digit code to <b className="text-foreground">{pending.email}</b>.
+                    Enter it below to finish creating your account.
+                  </div>
+                </div>
+                <label className="block">
+                  <span className="text-xs font-semibold text-muted-foreground">One-time code</span>
+                  <input
+                    value={otpInput}
+                    onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    inputMode="numeric"
+                    autoFocus
+                    placeholder="123456"
+                    className="mt-1 w-full h-11 rounded-xl border border-input bg-background/60 px-3 text-center text-lg tracking-[0.5em] font-bold outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </label>
+                {err && (
+                  <p className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">{err}</p>
+                )}
+                <button
+                  type="submit"
+                  disabled={otpInput.length !== 6}
+                  className="w-full h-11 rounded-xl gradient-brand text-primary-foreground font-semibold shadow-glow disabled:opacity-50 transition"
+                >
+                  Verify & create account
+                </button>
+                <div className="flex justify-between text-xs">
+                  <button type="button" onClick={() => { setPending(null); setErr(""); }} className="text-muted-foreground hover:text-foreground">
+                    ← Back
+                  </button>
+                  <button type="button" onClick={() => sendOtp(pending.email)} className="text-primary font-semibold">
+                    Resend code
+                  </button>
+                </div>
+              </form>
+            ) : (
             <form onSubmit={onSubmit} className="space-y-3">
               {mode === "register" && (
                 <>
@@ -131,13 +198,14 @@ function Landing() {
                 type="submit"
                 className="w-full h-11 rounded-xl gradient-brand text-primary-foreground font-semibold shadow-glow hover:opacity-95 active:scale-[0.99] transition"
               >
-                {mode === "login" ? "Sign in" : "Create account"}
+                {mode === "login" ? "Sign in" : "Send OTP & continue"}
               </button>
 
               <p className="text-xs text-center text-muted-foreground pt-2 lg:hidden">
                 Demo: <b>student@pats.edu</b> / <b>canteen123</b>
               </p>
             </form>
+            )}
           </div>
 
           <p className="text-center text-xs text-muted-foreground mt-4">
