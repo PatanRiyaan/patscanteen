@@ -7,6 +7,10 @@ import { useCart } from "@/lib/menu";
 import { Blobs } from "@/components/Blobs";
 import { Navbar } from "@/components/Navbar";
 import { Mail, Home as HomeIcon, IdCard, Phone, ShieldCheck, Receipt, Pencil, Save, X } from "lucide-react";
+import {
+  profileSchema,
+  formatPhone, formatStudentId, formatRoom, formatHostel,
+} from "@/lib/validation";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({ meta: [{ title: "Profile — Pat's Canteen" }] }),
