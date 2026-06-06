@@ -30,6 +30,7 @@ function Landing() {
     roomNo: string; hostel: string; studentId: string;
   }>(null);
   const [otpInput, setOtpInput] = useState("");
+  const [cooldown, setCooldown] = useState(0); // seconds until next resend is allowed
 
   // If already logged in, skip the landing page.
   useEffect(() => { if (user) nav({ to: "/dashboard" }); }, [user, nav]);
