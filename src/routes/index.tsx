@@ -5,7 +5,8 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { Blobs } from "@/components/Blobs";
 import { useTheme } from "@/hooks/use-theme";
-import { Moon, Sun, UtensilsCrossed, Sparkles, Clock, Wallet } from "lucide-react";
+import { Moon, Sun, UtensilsCrossed, Sparkles, Clock, Wallet, ShieldCheck } from "lucide-react";
+import { sendOtp, verifyOtp } from "@/lib/otp";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -23,6 +24,12 @@ function Landing() {
   const nav = useNavigate();
   const [mode, setMode] = useState<"login" | "register">("login");
   const [err, setErr] = useState("");
+  // OTP gate for sign-up: holds the pending registration payload until verified.
+  const [pending, setPending] = useState<null | {
+    email: string; password: string; name: string;
+    roomNo: string; hostel: string; studentId: string;
+  }>(null);
+  const [otpInput, setOtpInput] = useState("");
 
   // If already logged in, skip the landing page.
   useEffect(() => { if (user) nav({ to: "/dashboard" }); }, [user, nav]);
@@ -34,18 +41,37 @@ function Landing() {
     const email = String(f.get("email") || "");
     const password = String(f.get("password") || "");
 
-    const res = mode === "login"
-      ? login(email, password)
-      : register({
-          email, password,
-          name: String(f.get("name") || ""),
-          roomNo: String(f.get("room") || ""),
-          hostel: String(f.get("hostel") || ""),
-          studentId: String(f.get("sid") || ""),
-        });
+    if (mode === "login") {
+      const res = login(email, password);
+      if (!res.ok) setErr(res.error || "Something went wrong");
+      else nav({ to: "/dashboard" });
+      return;
+    }
 
-    if (!res.ok) setErr(res.error || "Something went wrong");
-    else nav({ to: "/dashboard" });
+    // Register flow: queue the payload and trigger an OTP email.
+    const payload = {
+      email, password,
+      name: String(f.get("name") || ""),
+      roomNo: String(f.get("room") || ""),
+      hostel: String(f.get("hostel") || ""),
+      studentId: String(f.get("sid") || ""),
+    };
+    setPending(payload);
+    setOtpInput("");
+    sendOtp(email);
+  }
+
+  // Confirm the OTP and finalize registration.
+  function confirmOtp(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setErr("");
+    if (!pending) return;
+    const v = verifyOtp(pending.email, otpInput);
+    if (!v.ok) { setErr(v.error || "Invalid OTP"); return; }
+    const r = register(pending);
+    if (!r.ok) { setErr(r.error || "Could not create account"); return; }
+    setPending(null);
+    nav({ to: "/dashboard" });
   }
 
   return (
