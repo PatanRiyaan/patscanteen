@@ -9,11 +9,24 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as PaymentRouteImport } from './routes/payment'
 import { Route as OrderRouteImport } from './routes/order'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as BillRouteImport } from './routes/bill'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaymentRoute = PaymentRouteImport.update({
+  id: '/payment',
+  path: '/payment',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OrderRoute = OrderRouteImport.update({
   id: '/order',
   path: '/order',
@@ -29,6 +42,11 @@ const BillRoute = BillRouteImport.update({
   path: '/bill',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -37,40 +55,88 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/bill': typeof BillRoute
   '/dashboard': typeof DashboardRoute
   '/order': typeof OrderRoute
+  '/payment': typeof PaymentRoute
+  '/profile': typeof ProfileRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/bill': typeof BillRoute
   '/dashboard': typeof DashboardRoute
   '/order': typeof OrderRoute
+  '/payment': typeof PaymentRoute
+  '/profile': typeof ProfileRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/bill': typeof BillRoute
   '/dashboard': typeof DashboardRoute
   '/order': typeof OrderRoute
+  '/payment': typeof PaymentRoute
+  '/profile': typeof ProfileRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/bill' | '/dashboard' | '/order'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/bill'
+    | '/dashboard'
+    | '/order'
+    | '/payment'
+    | '/profile'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/bill' | '/dashboard' | '/order'
-  id: '__root__' | '/' | '/bill' | '/dashboard' | '/order'
+  to:
+    | '/'
+    | '/admin'
+    | '/bill'
+    | '/dashboard'
+    | '/order'
+    | '/payment'
+    | '/profile'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/bill'
+    | '/dashboard'
+    | '/order'
+    | '/payment'
+    | '/profile'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
   BillRoute: typeof BillRoute
   DashboardRoute: typeof DashboardRoute
   OrderRoute: typeof OrderRoute
+  PaymentRoute: typeof PaymentRoute
+  ProfileRoute: typeof ProfileRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/payment': {
+      id: '/payment'
+      path: '/payment'
+      fullPath: '/payment'
+      preLoaderRoute: typeof PaymentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/order': {
       id: '/order'
       path: '/order'
@@ -92,6 +158,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BillRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -104,9 +177,12 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
   BillRoute: BillRoute,
   DashboardRoute: DashboardRoute,
   OrderRoute: OrderRoute,
+  PaymentRoute: PaymentRoute,
+  ProfileRoute: ProfileRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,11 +1,11 @@
-// Dashboard — randomised menu split into Food and Beverages.
+// Dashboard — menu split into Food and Beverages (stable order, no shuffle).
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { Blobs } from "@/components/Blobs";
 import { Navbar } from "@/components/Navbar";
 import { MenuCard } from "@/components/MenuCard";
-import { FOOD, BEVERAGES, shuffle, useCart } from "@/lib/menu";
+import { useCart } from "@/lib/menu";
 import { UtensilsCrossed, CupSoda, ArrowRight } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard")({
@@ -15,16 +15,11 @@ export const Route = createFileRoute("/dashboard")({
 
 function Dashboard() {
   const { user } = useAuth();
-  const { count, total } = useCart();
+  const { count, total, food, beverages } = useCart();
   const nav = useNavigate();
 
   // Bounce to landing if not logged in.
   useEffect(() => { if (!user) nav({ to: "/" }); }, [user, nav]);
-
-  // Randomise once per mount — useMemo keeps it stable on re-render.
-  const food = useMemo(() => shuffle(FOOD), []);
-  const drinks = useMemo(() => shuffle(BEVERAGES), []);
-
   if (!user) return null;
 
   return (
@@ -45,21 +40,13 @@ function Dashboard() {
         </section>
 
         {/* FOOD */}
-        <Section
-          icon={<UtensilsCrossed className="w-4 h-4" />}
-          title="Food"
-          count={food.length}
-        >
+        <Section icon={<UtensilsCrossed className="w-4 h-4" />} title="Food" count={food.length}>
           <Grid>{food.map((i) => <MenuCard key={i.id} item={i} />)}</Grid>
         </Section>
 
         {/* BEVERAGES */}
-        <Section
-          icon={<CupSoda className="w-4 h-4" />}
-          title="Beverages"
-          count={drinks.length}
-        >
-          <Grid>{drinks.map((i) => <MenuCard key={i.id} item={i} />)}</Grid>
+        <Section icon={<CupSoda className="w-4 h-4" />} title="Beverages" count={beverages.length}>
+          <Grid>{beverages.map((i) => <MenuCard key={i.id} item={i} />)}</Grid>
         </Section>
       </main>
 

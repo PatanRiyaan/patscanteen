@@ -8,6 +8,9 @@ export type User = {
   roomNo: string;
   hostel: string;
   studentId: string;
+  phone?: string;
+  // Demo: a single hard-coded admin account powers the /admin portal.
+  isAdmin?: boolean;
 };
 
 // 👉 Change these to add / edit demo accounts.
@@ -20,6 +23,8 @@ const DUMMY_USERS: Array<User & { password: string }> = [
     roomNo: "B-204",
     hostel: "Tagore Hostel",
     studentId: "PAT2026091",
+    phone: "+91 98765 43210",
+    isAdmin: true, // 👈 demo admin — can access /admin
   },
   {
     email: "priya@pats.edu",
@@ -28,6 +33,7 @@ const DUMMY_USERS: Array<User & { password: string }> = [
     roomNo: "A-112",
     hostel: "Nehru Hostel",
     studentId: "PAT2026102",
+    phone: "+91 91234 56780",
   },
   {
     email: "rahul@pats.edu",
@@ -36,6 +42,7 @@ const DUMMY_USERS: Array<User & { password: string }> = [
     roomNo: "C-307",
     hostel: "Gandhi Hostel",
     studentId: "PAT2026133",
+    phone: "+91 99887 76655",
   },
   {
     email: "sara@pats.edu",
@@ -44,6 +51,7 @@ const DUMMY_USERS: Array<User & { password: string }> = [
     roomNo: "D-021",
     hostel: "Bose Hostel",
     studentId: "PAT2026144",
+    phone: "+91 90011 22334",
   },
 ];
 

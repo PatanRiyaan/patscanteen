@@ -3,7 +3,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { useCart } from "@/lib/menu";
 import { useTheme } from "@/hooks/use-theme";
-import { Moon, Sun, ShoppingBag, LogOut, UtensilsCrossed } from "lucide-react";
+import { Moon, Sun, ShoppingBag, LogOut, UtensilsCrossed, User, Shield } from "lucide-react";
 import { AccountSwitcher } from "@/components/AccountSwitcher";
 
 export function Navbar() {
@@ -46,6 +46,26 @@ export function Navbar() {
               </span>
             )}
           </Link>
+
+          {/* Profile */}
+          <Link
+            to="/profile"
+            aria-label="Profile"
+            className="grid place-items-center w-10 h-10 rounded-xl border border-border bg-card hover:bg-muted transition"
+          >
+            <User className="w-4 h-4" />
+          </Link>
+
+          {/* Admin (only shown to admin accounts) */}
+          {user?.isAdmin && (
+            <Link
+              to="/admin"
+              aria-label="Admin"
+              className="hidden sm:grid place-items-center w-10 h-10 rounded-xl border border-border bg-card hover:bg-muted transition"
+            >
+              <Shield className="w-4 h-4 text-primary" />
+            </Link>
+          )}
 
           {/* Quick-switch between dummy accounts */}
           <AccountSwitcher />

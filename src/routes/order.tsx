@@ -94,10 +94,10 @@ function OrderPage() {
             </div>
 
             <button
-              onClick={() => nav({ to: "/bill" })}
+              onClick={() => nav({ to: "/payment" })}
               className="mt-6 w-full h-12 rounded-xl gradient-brand text-primary-foreground font-semibold shadow-glow hover:opacity-95 active:scale-[0.99] transition inline-flex items-center justify-center gap-2"
             >
-              Place order <ArrowRight className="w-4 h-4" />
+              Proceed to payment <ArrowRight className="w-4 h-4" />
             </button>
           </>
         )}
