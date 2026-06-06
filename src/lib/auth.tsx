@@ -63,6 +63,8 @@ type AuthCtx = {
   register: (u: User & { password: string }) => { ok: boolean; error?: string };
   // Switch to another known dummy account without re-entering a password.
   switchAccount: (email: string) => { ok: boolean; error?: string };
+  // Update the currently logged-in user's profile fields (demo: in-memory + localStorage).
+  updateUser: (patch: Partial<Omit<User, "email" | "isAdmin">>) => void;
   logout: () => void;
 };
 
@@ -124,13 +126,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { ok: true };
   };
 
+  // Edit profile fields. Persists to localStorage AND mutates the in-memory
+  // DUMMY_USERS list so the account switcher stays in sync.
+  const updateUser: AuthCtx["updateUser"] = (patch) => {
+    if (!user) return;
+    const next: User = { ...user, ...patch };
+    setUser(next);
+    localStorage.setItem(LS_KEY, JSON.stringify(next));
+    const idx = DUMMY_USERS.findIndex((u) => u.email === user.email);
+    if (idx >= 0) DUMMY_USERS[idx] = { ...DUMMY_USERS[idx], ...patch };
+    refreshAccounts();
+  };
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem(LS_KEY);
   };
 
   return (
-    <Ctx.Provider value={{ user, accounts, login, register, switchAccount, logout }}>
+    <Ctx.Provider value={{ user, accounts, login, register, switchAccount, updateUser, logout }}>
       {children}
     </Ctx.Provider>
   );
