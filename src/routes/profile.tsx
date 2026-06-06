@@ -29,6 +29,8 @@ function ProfilePage() {
   const [form, setForm] = useState({
     name: "", phone: "", hostel: "", roomNo: "", studentId: "",
   });
+  // Field-level error messages from the Zod validator.
+  const [errors, setErrors] = useState<Partial<Record<keyof typeof form, string>>>({});
 
   // Reset form whenever we open the editor or switch accounts.
   useEffect(() => {
@@ -40,6 +42,7 @@ function ProfilePage() {
         roomNo: user.roomNo,
         studentId: user.studentId,
       });
+      setErrors({});
     }
   }, [user, editing]);
 
@@ -52,15 +55,22 @@ function ProfilePage() {
 
   const save = (e: React.FormEvent) => {
     e.preventDefault();
-    updateUser({
-      name: form.name.trim() || user.name,
-      phone: form.phone.trim() || undefined,
-      hostel: form.hostel.trim() || user.hostel,
-      roomNo: form.roomNo.trim() || user.roomNo,
-      studentId: form.studentId.trim() || user.studentId,
-    });
+    // Validate with the shared profile schema before persisting.
+    const parsed = profileSchema.safeParse(form);
+    if (!parsed.success) {
+      const next: typeof errors = {};
+      for (const issue of parsed.error.issues) {
+        const k = issue.path[0] as keyof typeof form;
+        if (!next[k]) next[k] = issue.message;
+      }
+      setErrors(next);
+      return;
+    }
+    setErrors({});
+    updateUser(parsed.data);
     setEditing(false);
   };
+
 
   return (
     <div className="relative min-h-screen pb-20">
