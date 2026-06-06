@@ -1,12 +1,12 @@
-// Profile page — shows the logged-in student's details + order history.
-// 👉 To add editable fields, extend the form and call a future updateUser() in auth.tsx.
+// Profile page — view + edit student info, plus order history.
+// 👉 Add more editable fields by extending the `form` state and the inputs below.
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { useCart } from "@/lib/menu";
 import { Blobs } from "@/components/Blobs";
 import { Navbar } from "@/components/Navbar";
-import { Mail, Home as HomeIcon, IdCard, Phone, ShieldCheck, Receipt } from "lucide-react";
+import { Mail, Home as HomeIcon, IdCard, Phone, ShieldCheck, Receipt, Pencil, Save, X } from "lucide-react";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({ meta: [{ title: "Profile — Pat's Canteen" }] }),
@@ -14,19 +14,49 @@ export const Route = createFileRoute("/profile")({
 });
 
 function ProfilePage() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const { orders } = useCart();
   const nav = useNavigate();
 
   useEffect(() => { if (!user) nav({ to: "/" }); }, [user, nav]);
 
-  // Filter only the current user's orders. Memoised to avoid re-renders.
+  // Edit mode state.
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({
+    name: "", phone: "", hostel: "", roomNo: "", studentId: "",
+  });
+
+  // Reset form whenever we open the editor or switch accounts.
+  useEffect(() => {
+    if (user) {
+      setForm({
+        name: user.name,
+        phone: user.phone ?? "",
+        hostel: user.hostel,
+        roomNo: user.roomNo,
+        studentId: user.studentId,
+      });
+    }
+  }, [user, editing]);
+
   const myOrders = useMemo(
     () => (user ? orders.filter((o) => o.userEmail === user.email) : []),
     [orders, user],
   );
 
   if (!user) return null;
+
+  const save = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateUser({
+      name: form.name.trim() || user.name,
+      phone: form.phone.trim() || undefined,
+      hostel: form.hostel.trim() || user.hostel,
+      roomNo: form.roomNo.trim() || user.roomNo,
+      studentId: form.studentId.trim() || user.studentId,
+    });
+    setEditing(false);
+  };
 
   return (
     <div className="relative min-h-screen pb-20">
@@ -48,15 +78,54 @@ function ProfilePage() {
               </span>
             )}
           </div>
+          {!editing && (
+            <button
+              onClick={() => setEditing(true)}
+              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl border border-border bg-card hover:bg-muted transition text-sm font-semibold"
+            >
+              <Pencil className="w-4 h-4" /> Edit
+            </button>
+          )}
         </section>
 
-        {/* Details grid */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Field icon={<Mail className="w-4 h-4" />}     label="Email"   value={user.email} />
-          <Field icon={<Phone className="w-4 h-4" />}    label="Phone"   value={user.phone ?? "—"} />
-          <Field icon={<HomeIcon className="w-4 h-4" />} label="Hostel"  value={user.hostel} />
-          <Field icon={<IdCard className="w-4 h-4" />}   label="Room"    value={user.roomNo} />
-        </section>
+        {/* Details — view or edit */}
+        {editing ? (
+          <form
+            onSubmit={save}
+            className="rounded-2xl border border-border bg-card shadow-card p-5 grid sm:grid-cols-2 gap-3 animate-fade-up"
+          >
+            <Input label="Full name"  value={form.name}      onChange={(v) => setForm({ ...form, name: v })} />
+            <Input label="Phone"      value={form.phone}     onChange={(v) => setForm({ ...form, phone: v })} placeholder="+91 …" />
+            <Input label="Hostel"     value={form.hostel}    onChange={(v) => setForm({ ...form, hostel: v })} />
+            <Input label="Room no."   value={form.roomNo}    onChange={(v) => setForm({ ...form, roomNo: v })} />
+            <Input label="Student ID" value={form.studentId} onChange={(v) => setForm({ ...form, studentId: v })} className="sm:col-span-2" />
+            <Input label="Email (read-only)" value={user.email} onChange={() => {}} disabled className="sm:col-span-2" />
+
+            <div className="sm:col-span-2 flex gap-2 justify-end pt-1">
+              <button
+                type="button"
+                onClick={() => setEditing(false)}
+                className="inline-flex items-center gap-1.5 h-10 px-4 rounded-xl border border-border bg-card hover:bg-muted text-sm font-semibold"
+              >
+                <X className="w-4 h-4" /> Cancel
+              </button>
+              <button
+                type="submit"
+                className="inline-flex items-center gap-1.5 h-10 px-4 rounded-xl gradient-brand text-primary-foreground shadow-glow text-sm font-semibold"
+              >
+                <Save className="w-4 h-4" /> Save changes
+              </button>
+            </div>
+          </form>
+        ) : (
+          <section className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Field icon={<Mail className="w-4 h-4" />}     label="Email"      value={user.email} />
+            <Field icon={<Phone className="w-4 h-4" />}    label="Phone"      value={user.phone ?? "—"} />
+            <Field icon={<HomeIcon className="w-4 h-4" />} label="Hostel"     value={user.hostel} />
+            <Field icon={<IdCard className="w-4 h-4" />}   label="Room"       value={user.roomNo} />
+            <Field icon={<IdCard className="w-4 h-4" />}   label="Student ID" value={user.studentId} />
+          </section>
+        )}
 
         {/* Order history */}
         <section>
@@ -102,6 +171,26 @@ function Field({ icon, label, value }: { icon: React.ReactNode; label: string; v
         <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
         <div className="font-semibold truncate">{value}</div>
       </div>
+    </div>
+  );
+}
+
+function Input({
+  label, value, onChange, placeholder, disabled, className = "",
+}: {
+  label: string; value: string; onChange: (v: string) => void;
+  placeholder?: string; disabled?: boolean; className?: string;
+}) {
+  return (
+    <div className={"flex flex-col " + className}>
+      <label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">{label}</label>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        disabled={disabled}
+        className="h-10 rounded-xl border border-border bg-background px-3 text-sm disabled:opacity-60"
+      />
     </div>
   );
 }
