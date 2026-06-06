@@ -108,11 +108,19 @@ function ProfilePage() {
             onSubmit={save}
             className="rounded-2xl border border-border bg-card shadow-card p-5 grid sm:grid-cols-2 gap-3 animate-fade-up"
           >
-            <Input label="Full name"  value={form.name}      onChange={(v) => setForm({ ...form, name: v })} />
-            <Input label="Phone"      value={form.phone}     onChange={(v) => setForm({ ...form, phone: v })} placeholder="+91 …" />
-            <Input label="Hostel"     value={form.hostel}    onChange={(v) => setForm({ ...form, hostel: v })} />
-            <Input label="Room no."   value={form.roomNo}    onChange={(v) => setForm({ ...form, roomNo: v })} />
-            <Input label="Student ID" value={form.studentId} onChange={(v) => setForm({ ...form, studentId: v })} className="sm:col-span-2" />
+            <Input label="Full name"  value={form.name}      error={errors.name}
+                   onChange={(v) => setForm({ ...form, name: v })} />
+            <Input label="Phone"      value={form.phone}     error={errors.phone}
+                   placeholder="+91 98765 43210"
+                   onChange={(v) => setForm({ ...form, phone: formatPhone(v) })} />
+            <Input label="Hostel"     value={form.hostel}    error={errors.hostel}
+                   onChange={(v) => setForm({ ...form, hostel: formatHostel(v) })} />
+            <Input label="Room no."   value={form.roomNo}    error={errors.roomNo}
+                   placeholder="B-204"
+                   onChange={(v) => setForm({ ...form, roomNo: formatRoom(v) })} />
+            <Input label="Student ID" value={form.studentId} error={errors.studentId}
+                   placeholder="PAT2026091" className="sm:col-span-2"
+                   onChange={(v) => setForm({ ...form, studentId: formatStudentId(v) })} />
             <Input label="Email (read-only)" value={user.email} onChange={() => {}} disabled className="sm:col-span-2" />
 
             <div className="sm:col-span-2 flex gap-2 justify-end pt-1">
