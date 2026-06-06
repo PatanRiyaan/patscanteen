@@ -182,12 +182,28 @@ function Landing() {
                 >
                   Verify & create account
                 </button>
-                <div className="flex justify-between text-xs">
-                  <button type="button" onClick={() => { setPending(null); setErr(""); }} className="text-muted-foreground hover:text-foreground">
+                <div className="flex justify-between text-xs items-center">
+                  <button type="button" onClick={() => { setPending(null); setErr(""); setCooldown(0); }} className="text-muted-foreground hover:text-foreground">
                     ← Back
                   </button>
-                  <button type="button" onClick={() => sendOtp(pending.email)} className="text-primary font-semibold">
-                    Resend code
+                  <button
+                    type="button"
+                    disabled={cooldown > 0}
+                    onClick={() => {
+                      if (!pending) return;
+                      const otpRes = sendOtp(pending.email);
+                      if (!otpRes.ok) {
+                        setErr(otpRes.error);
+                        setCooldown(otpRes.retryAfterSec);
+                      } else {
+                        setErr("");
+                        setOtpInput("");
+                        setCooldown(60);
+                      }
+                    }}
+                    className="text-primary font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  >
+                    {cooldown > 0 ? `Resend in ${cooldown}s` : "Resend code"}
                   </button>
                 </div>
               </form>
