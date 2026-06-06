@@ -135,6 +135,47 @@ function Landing() {
               ))}
             </div>
 
+            {pending ? (
+              // OTP gate — user must enter the 6-digit code we "sent" to their email.
+              <form onSubmit={confirmOtp} className="space-y-3">
+                <div className="flex items-start gap-3 rounded-xl border border-border bg-muted/50 p-3">
+                  <ShieldCheck className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                  <div className="text-xs text-muted-foreground">
+                    We sent a 6-digit code to <b className="text-foreground">{pending.email}</b>.
+                    Enter it below to finish creating your account.
+                  </div>
+                </div>
+                <label className="block">
+                  <span className="text-xs font-semibold text-muted-foreground">One-time code</span>
+                  <input
+                    value={otpInput}
+                    onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    inputMode="numeric"
+                    autoFocus
+                    placeholder="123456"
+                    className="mt-1 w-full h-11 rounded-xl border border-input bg-background/60 px-3 text-center text-lg tracking-[0.5em] font-bold outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </label>
+                {err && (
+                  <p className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">{err}</p>
+                )}
+                <button
+                  type="submit"
+                  disabled={otpInput.length !== 6}
+                  className="w-full h-11 rounded-xl gradient-brand text-primary-foreground font-semibold shadow-glow disabled:opacity-50 transition"
+                >
+                  Verify & create account
+                </button>
+                <div className="flex justify-between text-xs">
+                  <button type="button" onClick={() => { setPending(null); setErr(""); }} className="text-muted-foreground hover:text-foreground">
+                    ← Back
+                  </button>
+                  <button type="button" onClick={() => sendOtp(pending.email)} className="text-primary font-semibold">
+                    Resend code
+                  </button>
+                </div>
+              </form>
+            ) : (
             <form onSubmit={onSubmit} className="space-y-3">
               {mode === "register" && (
                 <>
@@ -157,13 +198,14 @@ function Landing() {
                 type="submit"
                 className="w-full h-11 rounded-xl gradient-brand text-primary-foreground font-semibold shadow-glow hover:opacity-95 active:scale-[0.99] transition"
               >
-                {mode === "login" ? "Sign in" : "Create account"}
+                {mode === "login" ? "Sign in" : "Send OTP & continue"}
               </button>
 
               <p className="text-xs text-center text-muted-foreground pt-2 lg:hidden">
                 Demo: <b>student@pats.edu</b> / <b>canteen123</b>
               </p>
             </form>
+            )}
           </div>
 
           <p className="text-center text-xs text-muted-foreground mt-4">
