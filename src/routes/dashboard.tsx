@@ -6,6 +6,7 @@ import { Blobs } from "@/components/Blobs";
 import { Navbar } from "@/components/Navbar";
 import { MenuCard } from "@/components/MenuCard";
 import { useCart } from "@/lib/menu";
+import { Chatbot } from "@/components/Chatbot";
 import { UtensilsCrossed, CupSoda, ArrowRight } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard")({
@@ -72,6 +73,8 @@ function Dashboard() {
           </Link>
         </div>
       )}
+      {/* Floating AI recommendation bot */}
+      <Chatbot />
     </div>
   );
 }
