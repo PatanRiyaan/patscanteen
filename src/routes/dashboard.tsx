@@ -73,6 +73,8 @@ function Dashboard() {
           </Link>
         </div>
       )}
+      {/* Floating AI recommendation bot */}
+      <Chatbot />
     </div>
   );
 }
