@@ -198,10 +198,10 @@ function Field({ icon, label, value }: { icon: React.ReactNode; label: string; v
 }
 
 function Input({
-  label, value, onChange, placeholder, disabled, className = "",
+  label, value, onChange, placeholder, disabled, className = "", error,
 }: {
   label: string; value: string; onChange: (v: string) => void;
-  placeholder?: string; disabled?: boolean; className?: string;
+  placeholder?: string; disabled?: boolean; className?: string; error?: string;
 }) {
   return (
     <div className={"flex flex-col " + className}>
@@ -211,11 +211,17 @@ function Input({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         disabled={disabled}
-        className="h-10 rounded-xl border border-border bg-background px-3 text-sm disabled:opacity-60"
+        aria-invalid={Boolean(error)}
+        className={
+          "h-10 rounded-xl border bg-background px-3 text-sm disabled:opacity-60 " +
+          (error ? "border-destructive" : "border-border")
+        }
       />
+      {error && <p className="mt-1 text-[11px] text-destructive">{error}</p>}
     </div>
   );
 }
+
 
 export function StatusPill({ status }: { status: "preparing" | "ready" | "delivered" }) {
   const cls =
